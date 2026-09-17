@@ -96,26 +96,12 @@ export async function initDB() {
   `);
 
   await query(`
-    CREATE TABLE IF NOT EXISTS exam_categories (
+    CREATE TABLE IF NOT EXISTS site_config (
       id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      subtitle VARCHAR(255),
-      description TEXT,
-      banner_url TEXT,
-      price DECIMAL(10, 2) DEFAULT 499.00,
-      is_premium BOOLEAN DEFAULT true,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-  `);
-
-  await query(`
-    CREATE TABLE IF NOT EXISTS pdfs (
-      id SERIAL PRIMARY KEY,
-      section_id INTEGER REFERENCES exam_categories(id) ON DELETE CASCADE,
-      title VARCHAR(255) NOT NULL,
-      price DECIMAL(10, 2) DEFAULT 0.00,
-      cloudinary_url TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW()
+      hero_image_url TEXT,
+      company_info_pdf_url TEXT,
+      preparation_pdf_url TEXT,
+      price DECIMAL(10, 2) DEFAULT 499.00
     );
   `);
 
@@ -123,7 +109,6 @@ export async function initDB() {
     CREATE TABLE IF NOT EXISTS purchases (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      section_id INTEGER REFERENCES exam_categories(id) ON DELETE CASCADE,
       payment_id VARCHAR(255),
       amount DECIMAL(10, 2),
       status VARCHAR(50) DEFAULT 'success',
@@ -131,30 +116,10 @@ export async function initDB() {
     );
   `);
 
-  // Seed exam categories if empty
-  const existing = await query('SELECT id FROM exam_categories LIMIT 1');
-  if (existing.length === 0) {
-    const categories = [
-      ['UPSC', '(Prelim + Mains Complete Notes)'],
-      ['MPSC', '(Prelim + Mains Complete Notes)'],
-      ['NEET', '(Complete Study Notes)'],
-      ['JEE', '(Complete Study Notes)'],
-      ['MH-CET', '(Complete Study Notes)'],
-      ['पुलिस भरती', '(Complete Study Kit)'],
-      ['तलाठी भरती', '(Complete Study Kit)'],
-      ['AMVI - RTO', '(Pre + Mains Notes)'],
-      ['अग्निवीर', '(Complete Study Notes)'],
-      ['SSC', '(CGL, CHSL, MTS)'],
-      ['Banking', '(IBPS, SBI, RBI)'],
-      ['Railway', '(RRB NTPC, Group-D)'],
-      [' Defence', '(NDA, CDS, Army, Navy, Airforce)'],
-      ['TET / CTET', '/ Teacher Bharti'],
-      ['Speaking English', '(Communication Skills)'],
-      ['Business Ideas', '(Startup Ideas)'],
-    ];
-    for (const [title, subtitle] of categories) {
-      await query('INSERT INTO exam_categories (title, subtitle) VALUES ($1, $2)', [title, subtitle]);
-    }
+  // Seed site_config if empty
+  const existingConfig = await query('SELECT id FROM site_config LIMIT 1');
+  if (existingConfig.length === 0) {
+    await query('INSERT INTO site_config (price) VALUES ($1)', [499.00]);
   }
 
   // 🛡️ Auto-sync Superuser from .env.local
