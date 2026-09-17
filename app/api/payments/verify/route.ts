@@ -26,12 +26,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Success! Record purchase
-    const sectionResult = await query<{ price: number }>('SELECT price FROM exam_categories WHERE id = $1', [sectionId]);
-    const price = sectionResult[0]?.price || 0;
+    const config = await query<{ price: number }>('SELECT price FROM site_config WHERE id = 1');
+    const price = config[0]?.price || 0;
 
     await query(
-      'INSERT INTO purchases (user_id, section_id, payment_id, amount, status) VALUES ($1, $2, $3, $4, $5)',
-      [payload.userId, sectionId, razorpay_payment_id, price, 'success']
+      'INSERT INTO purchases (user_id, payment_id, amount, status) VALUES ($1, $2, $3, $4)',
+      [payload.userId, razorpay_payment_id, price, 'success']
     );
 
     return NextResponse.json({ success: true });
