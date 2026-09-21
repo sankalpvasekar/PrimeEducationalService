@@ -10,6 +10,14 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check cache first
+    const cached = sessionStorage.getItem('siteConfig');
+    if (cached) {
+      setConfig(JSON.parse(cached));
+      setLoading(false);
+      return;
+    }
+
     fetch('/api/admin/config')
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -17,7 +25,10 @@ export default function HomePage() {
         return text ? JSON.parse(text) : {};
       })
       .then(data => { 
-        if (Object.keys(data).length > 0) setConfig(data);
+        if (Object.keys(data).length > 0) {
+            setConfig(data);
+            sessionStorage.setItem('siteConfig', JSON.stringify(data));
+        }
         setLoading(false); 
       })
       .catch(err => {
