@@ -10,31 +10,35 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check cache first
-    const cached = sessionStorage.getItem('siteConfig');
-    if (cached) {
-      setConfig(JSON.parse(cached));
-      setLoading(false);
-      return;
-    }
-
-    fetch('/api/admin/config')
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const text = await res.text();
-        return text ? JSON.parse(text) : {};
-      })
-      .then(data => { 
-        if (Object.keys(data).length > 0) {
-            setConfig(data);
-            sessionStorage.setItem('siteConfig', JSON.stringify(data));
+    // 1. Fetch Config
+    const fetchConfig = async () => {
+        const cached = sessionStorage.getItem('siteConfig');
+        if (cached) {
+            setConfig(JSON.parse(cached));
+        } else {
+            const res = await fetch('/api/admin/config');
+            if (res.ok) {
+                const data = await res.json();
+                if (Object.keys(data).length > 0) {
+                    setConfig(data);
+                    sessionStorage.setItem('siteConfig', JSON.stringify(data));
+                }
+            }
         }
-        setLoading(false); 
-      })
-      .catch(err => {
-        console.error('Fetch error:', err);
+    };
+
+    // 2. Fetch Payment Status
+    const fetchPurchaseStatus = async () => {
+        const res = await fetch('/api/check-purchase');
+        if (res.ok) {
+            const data = await res.json();
+            setHasPaid(data.hasPaid);
+        }
         setLoading(false);
-      });
+    };
+
+    fetchConfig();
+    fetchPurchaseStatus();
   }, []);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" size={40} /></div>;
