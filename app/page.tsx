@@ -10,8 +10,20 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/admin/config').then(res => res.json()).then(data => { setConfig(data); setLoading(false); });
-    // TODO: Fetch payment status
+    fetch('/api/admin/config')
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const text = await res.text();
+        return text ? JSON.parse(text) : {};
+      })
+      .then(data => { 
+        if (Object.keys(data).length > 0) setConfig(data);
+        setLoading(false); 
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        setLoading(false);
+      });
   }, []);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" size={40} /></div>;

@@ -3,8 +3,13 @@ import { query } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 
 export async function GET() {
-  const configs = await query('SELECT * FROM site_config LIMIT 1');
-  return NextResponse.json(configs[0] || {});
+  try {
+    const configs = await query('SELECT * FROM site_config LIMIT 1');
+    return NextResponse.json(configs[0] || {});
+  } catch (err) {
+    console.error('Config Fetch Error:', err);
+    return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
