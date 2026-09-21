@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, initDB } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 
 export async function GET() {
   try {
+    await initDB(); // Ensure table exists
     const configs = await query('SELECT * FROM site_config LIMIT 1');
     return NextResponse.json(configs[0] || {});
   } catch (err) {
