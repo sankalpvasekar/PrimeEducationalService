@@ -9,9 +9,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [config, setConfig] = useState({ 
-    hero_image_url: '', 
-    company_info_pdf_url: '', 
-    preparation_pdf_url: '', 
+    hero_image_urls: [] as string[], 
+    company_info_pdf_urls: [] as string[], 
+    preparation_pdf_urls: [] as string[], 
     price: '499' 
   });
 
@@ -51,21 +51,23 @@ export default function AdminDashboard() {
         </h1>
         
         <div className="bg-white p-8 rounded-3xl border border-[#C5A059]/20 shadow-xl space-y-6">
-            <div className="space-y-2">
-                <label className="text-xs font-bold text-[#A1887F] uppercase tracking-widest">Hero Image URL</label>
-                <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" value={config.hero_image_url} onChange={e => setConfig({...config, hero_image_url: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-                <label className="text-xs font-bold text-[#A1887F] uppercase tracking-widest">Company Info PDF URL</label>
-                <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" value={config.company_info_pdf_url} onChange={e => setConfig({...config, company_info_pdf_url: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-                <label className="text-xs font-bold text-[#A1887F] uppercase tracking-widest">Preparation PDF URL</label>
-                <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" value={config.preparation_pdf_url} onChange={e => setConfig({...config, preparation_pdf_url: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-                <label className="text-xs font-bold text-[#A1887F] uppercase tracking-widest">Product Price (₹)</label>
-                <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" value={config.price} onChange={e => setConfig({...config, price: e.target.value})} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                    <h2 className="text-sm font-bold text-[#5D4037] uppercase">Hero Section</h2>
+                    <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" placeholder="Upload Hero Image" type="file" />
+                </div>
+                <div className="space-y-4">
+                    <h2 className="text-sm font-bold text-[#5D4037] uppercase">Company Info PDF</h2>
+                    <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" placeholder="Upload Company Info PDF" type="file" />
+                </div>
+                <div className="space-y-4">
+                    <h2 className="text-sm font-bold text-[#5D4037] uppercase">Preparation PDF</h2>
+                    <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" placeholder="Upload Preparation PDF" type="file" />
+                </div>
+                <div className="space-y-4">
+                    <h2 className="text-sm font-bold text-[#5D4037] uppercase">Price</h2>
+                    <input className="w-full bg-[#FDFBF7] border border-[#C5A059]/20 rounded-xl px-4 py-3" value={config.price} onChange={e => setConfig({...config, price: e.target.value})} />
+                </div>
             </div>
             
             <button 

@@ -22,13 +22,13 @@ export async function POST(req: NextRequest) {
     if (!payload || !payload.isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const body = await req.json();
-    const { hero_image_url, company_info_pdf_url, preparation_pdf_url, price } = body;
+    const { hero_image_urls, company_info_pdf_urls, preparation_pdf_urls, price } = body;
 
     await query(`
       UPDATE site_config 
-      SET hero_image_url = $1, company_info_pdf_url = $2, preparation_pdf_url = $3, price = $4
+      SET hero_image_urls = $1, company_info_pdf_urls = $2, preparation_pdf_urls = $3, price = $4
       WHERE id = 1
-    `, [hero_image_url, company_info_pdf_url, preparation_pdf_url, price]);
+    `, [hero_image_urls, company_info_pdf_urls, preparation_pdf_urls, price]);
 
     return NextResponse.json({ success: true, message: 'Configuration updated!' });
   } catch (err) {
