@@ -56,7 +56,7 @@ export default function LoginPage() {
 
       toast.success(`Welcome back, ${data.user.name}!`);
       if (data.user.isAdmin) {
-        router.push('/admin');
+        router.push('/admin/company');
       } else {
         router.push('/');
       }
