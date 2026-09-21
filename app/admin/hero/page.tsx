@@ -1,0 +1,1 @@
+export default function HeroPage() { return <div>Hero Configuration</div>; }
