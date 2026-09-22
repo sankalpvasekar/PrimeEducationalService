@@ -1,87 +1,57 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { query } from '@/lib/db';
 import Image from 'next/image';
-import { Loader2 } from 'lucide-react';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/jwt';
+import PayButton from '@/components/PayButton'; // We will create this
 
-export default function HomePage() {
-  const [config, setConfig] = useState({ 
-    hero_images: [] as string[], 
-    company_pdfs: [] as {url: string, title: string}[], 
-    preparation_pdfs: [] as {url: string, title: string}[], 
-    price: '499' 
-  });
-  const [hasPaid, setHasPaid] = useState(false);
-  const [loading, setLoading] = useState(true);
+async function getAdminData() {
+  const configs = await query('SELECT * FROM admins_data LIMIT 1');
+  return configs[0] || { hero_images: [], company_pdfs: [], preparation_pdfs: [], price: '499' };
+}
 
-  useEffect(() => {
-    // 1. Fetch Config - always fresh
-    const fetchConfig = async () => {
-        try {
-            const res = await fetch('/api/admin/config', { cache: 'no-store' });
-            if (res.ok) {
-                const data = await res.json();
-                console.log('Fetched config:', data); // Debug log
-                if (data && Object.keys(data).length > 0) {
-                    setConfig({
-                        hero_images: data.hero_images || [],
-                        company_pdfs: data.company_pdfs || [],
-                        preparation_pdfs: data.preparation_pdfs || [],
-                        price: data.price?.toString() || '499'
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch config:', error);
-        }
-    };
+async function checkPurchaseStatus() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) return false;
+  
+  const payload = verifyToken(token);
+  if (!payload) return false;
 
-    // 2. Fetch Payment Status
-    const fetchPurchaseStatus = async () => {
-        const res = await fetch('/api/check-purchase');
-        if (res.ok) {
-            const data = await res.json();
-            setHasPaid(data.hasPaid);
-        }
-        setLoading(false);
-    };
+  const users = await query<{ payment_done: boolean }>('SELECT payment_done FROM users WHERE id = $1', [payload.userId]);
+  return users.length > 0 && users[0].payment_done;
+}
 
-    fetchConfig();
-    fetchPurchaseStatus();
-  }, []);
-
-  const router = useRouter();
-
-  const handlePay = () => {
-    const user = localStorage.getItem('user');
-    if (!user) {
-        router.push('/login');
-        return;
-    }
-    // Proceed to payment integration
-  };
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" size={40} /></div>;
+export default async function HomePage() {
+  const config = await getAdminData();
+  const hasPaid = await checkPurchaseStatus();
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] p-6 font-sans">
-        <main className="max-w-xl mx-auto space-y-8">
-            {config.hero_images && config.hero_images.map((url, i) => (
-                <Image key={i} src={url} alt="Hero" width={600} height={300} className="rounded-3xl" />
+    <div className="min-h-screen bg-[#FDFBF7] p-4 md:p-6 font-sans">
+        <main className="max-w-xl mx-auto space-y-6">
+            {/* Hero Section */}
+            {config.hero_images && (config.hero_images as string[]).map((url, i) => (
+                <div key={i} className="relative w-full aspect-video">
+                    <Image src={url} alt={`Hero ${i}`} fill className="rounded-3xl object-cover" />
+                </div>
             ))}
             
+            {/* Material / Payment Section */}
             {hasPaid ? (
                 <div className="space-y-4">
-                    <h2 className="text-xl font-bold">Access Material</h2>
-                    {config.company_pdfs && config.company_pdfs.map((pdf: any, i: number) => (
-                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold">Company Info: {pdf.title}</a>
+                    <h2 className="text-xl font-bold text-[#5D4037]">Access Material</h2>
+                    {(config.company_pdfs as any[]).map((pdf, i) => (
+                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold hover:bg-[#3E2723] transition-colors">
+                            {pdf.title}
+                        </a>
                     ))}
-                    {config.preparation_pdfs && config.preparation_pdfs.map((pdf: any, i: number) => (
-                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold">Preparation: {pdf.title}</a>
+                    {(config.preparation_pdfs as any[]).map((pdf, i) => (
+                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold hover:bg-[#A1887F] transition-colors">
+                            {pdf.title}
+                        </a>
                     ))}
                 </div>
             ) : (
-                <button onClick={handlePay} className="w-full bg-[#5D4037] text-white p-4 rounded-xl font-bold">Pay ₹{config.price}</button>
+                <PayButton price={config.price.toString()} />
             )}
         </main>
     </div>
