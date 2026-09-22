@@ -96,7 +96,6 @@ export async function initDB() {
   `);
 
   await query(`
-    DROP TABLE IF EXISTS site_config;
     CREATE TABLE IF NOT EXISTS site_config (
       id SERIAL PRIMARY KEY,
       hero_image_urls TEXT[],
@@ -106,8 +105,12 @@ export async function initDB() {
     );
   `);
 
-  await query('INSERT INTO site_config (hero_image_urls, company_info_pdf_urls, preparation_pdf_urls, price) VALUES ($1, $2, $3, $4)', 
+  // Seed site_config if empty
+  const existingConfig = await query('SELECT id FROM site_config LIMIT 1');
+  if (existingConfig.length === 0) {
+    await query('INSERT INTO site_config (hero_image_urls, company_info_pdf_urls, preparation_pdf_urls, price) VALUES ($1, $2, $3, $4)', 
       [[], [], [], 499.00]);
+  }
 
   // 🛡️ Auto-sync Superuser from .env.local
   await syncAdminUser();
