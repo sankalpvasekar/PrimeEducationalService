@@ -5,7 +5,12 @@ import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 
 export default function HomePage() {
-  const [config, setConfig] = useState({ hero_image_url: '', company_info_pdf_url: '', preparation_pdf_url: '', price: '499' });
+  const [config, setConfig] = useState({ 
+    hero_image_urls: [] as string[], 
+    company_pdfs: [] as {url: string, title: string}[], 
+    preparation_pdfs: [] as {url: string, title: string}[], 
+    price: '499' 
+  });
   const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(true);
 
