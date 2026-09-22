@@ -41,20 +41,38 @@ export default function HomePage() {
     fetchPurchaseStatus();
   }, []);
 
+  const router = useRouter();
+
+  const handlePay = () => {
+    const user = localStorage.getItem('user');
+    if (!user) {
+        router.push('/login');
+        return;
+    }
+    // Proceed to payment integration
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" size={40} /></div>;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-6 font-sans">
         <main className="max-w-xl mx-auto space-y-8">
-            {config.hero_image_url && <Image src={config.hero_image_url} alt="Hero" width={600} height={300} className="rounded-3xl" />}
+            {config.hero_image_urls && config.hero_image_urls.map((url, i) => (
+                <Image key={i} src={url} alt="Hero" width={600} height={300} className="rounded-3xl" />
+            ))}
             
             {hasPaid ? (
                 <div className="space-y-4">
-                    <a href={config.company_info_pdf_url} className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold">Company Information</a>
-                    <a href={config.preparation_pdf_url} className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold">Preparation Material</a>
+                    <h2 className="text-xl font-bold">Access Material</h2>
+                    {config.company_pdfs && config.company_pdfs.map((pdf: any, i: number) => (
+                        <a key={i} href={pdf.url} className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold">Company Info: {pdf.title}</a>
+                    ))}
+                    {config.preparation_pdfs && config.preparation_pdfs.map((pdf: any, i: number) => (
+                        <a key={i} href={pdf.url} className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold">Preparation: {pdf.title}</a>
+                    ))}
                 </div>
             ) : (
-                <button className="w-full bg-[#5D4037] text-white p-4 rounded-xl font-bold">Pay ₹{config.price}</button>
+                <button onClick={handlePay} className="w-full bg-[#5D4037] text-white p-4 rounded-xl font-bold">Pay ₹{config.price}</button>
             )}
         </main>
     </div>
