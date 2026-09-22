@@ -50,18 +50,28 @@ export default async function HomePage() {
             
             {/* Material / Payment Section */}
             {hasPaid ? (
-                <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-[#5D4037]">Access Material</h2>
-                    {(config.company_pdfs as any[]).map((pdf, i) => (
-                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold hover:bg-[#3E2723] transition-colors">
-                            Company Info: {pdf.title}
-                        </a>
-                    ))}
-                    {(config.preparation_pdfs as any[]).map((pdf, i) => (
-                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold hover:bg-[#A1887F] transition-colors">
-                            Preparation: {pdf.title}
-                        </a>
-                    ))}
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-[#5D4037]">Dashboard</h2>
+                    <p className="text-[#A1887F]">Welcome! You have full access to the materials below.</p>
+                    
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="space-y-3">
+                            <h3 className="font-semibold text-lg text-[#5D4037] border-b pb-2">Company Information</h3>
+                            {(config.company_pdfs as any[]).map((pdf, i) => (
+                                <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full bg-white border border-[#5D4037]/20 text-[#5D4037] p-4 rounded-xl font-bold hover:bg-[#5D4037] hover:text-white transition-colors">
+                                    {pdf.title}
+                                </a>
+                            ))}
+                        </div>
+                        <div className="space-y-3">
+                            <h3 className="font-semibold text-lg text-[#C5A059] border-b pb-2">Preparation Material</h3>
+                            {(config.preparation_pdfs as any[]).map((pdf, i) => (
+                                <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full bg-white border border-[#C5A059]/20 text-[#C5A059] p-4 rounded-xl font-bold hover:bg-[#C5A059] hover:text-white transition-colors">
+                                    {pdf.title}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             ) : (
                 <PayButton price={priceDisplay} />
