@@ -3,8 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 
-// Removed redundant local Pool declaration
-
 // 🛡️ Robust Environment Loader for maintenance scripts
 if (!process.env.DATABASE_URL) {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -39,6 +37,12 @@ export const pool =
 
 if (process.env.NODE_ENV !== 'production') globalForDb.pool = pool;
 
+/**
+ * Executes a database query against the PostgreSQL pool.
+ * @param text - The SQL query string.
+ * @param params - Optional parameters for the query.
+ * @returns A promise that resolves to the query result rows.
+ */
 export async function query<T = Record<string, unknown>>(
   text: string,
   params?: unknown[]
@@ -58,64 +62,47 @@ export async function query<T = Record<string, unknown>>(
   }
 }
 
+/**
+ * Initializes the database schema.
+ * Drops existing tables and recreates them with the current schema.
+ * Seeds default data for admin configurations.
+ */
 export async function initDB() {
   await query(`
+    DROP TABLE IF EXISTS users;
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       is_admin BOOLEAN DEFAULT false,
-      is_blocked BOOLEAN DEFAULT false,
-      device_switch_count INTEGER DEFAULT 0,
+      payment_done BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
 
   await query(`
-    CREATE TABLE IF NOT EXISTS sessions (
+    DROP TABLE IF EXISTS admins_data;
+    CREATE TABLE IF NOT EXISTS admins_data (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      token TEXT NOT NULL,
-      device_id TEXT,
-      is_active BOOLEAN DEFAULT true,
-      expires_at TIMESTAMP NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-  `);
-
-  await query(`
-    CREATE TABLE IF NOT EXISTS otp_tokens (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) NOT NULL,
-      otp VARCHAR(6) NOT NULL,
-      expires_at TIMESTAMP NOT NULL,
-      is_used BOOLEAN DEFAULT false,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-  `);
-
-  await query(`
-    CREATE TABLE IF NOT EXISTS site_config (
-      id SERIAL PRIMARY KEY,
-      hero_image_urls TEXT[],
-      company_info_pdf_urls TEXT[],
-      preparation_pdf_urls TEXT[],
+      hero_images JSONB DEFAULT '[]',
+      company_pdfs JSONB DEFAULT '[]',
+      preparation_pdfs JSONB DEFAULT '[]',
       price DECIMAL(10, 2) DEFAULT 499.00
     );
   `);
 
-  // Seed site_config if empty
-  const existingConfig = await query('SELECT id FROM site_config LIMIT 1');
-  if (existingConfig.length === 0) {
-    await query('INSERT INTO site_config (hero_image_urls, company_info_pdf_urls, preparation_pdf_urls, price) VALUES ($1, $2, $3, $4)', 
-      [[], [], [], 499.00]);
-  }
+  await query('INSERT INTO admins_data (hero_images, company_pdfs, preparation_pdfs, price) VALUES ($1, $2, $3, $4)', 
+      [JSON.stringify([]), JSON.stringify([]), JSON.stringify([]), 499.00]);
 
   // 🛡️ Auto-sync Superuser from .env.local
   await syncAdminUser();
 }
 
+/**
+ * Synchronizes the superuser account from environment variables.
+ * Creates or updates the admin user in the database.
+ */
 export async function syncAdminUser() {
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
@@ -130,12 +117,11 @@ export async function syncAdminUser() {
     const hash = await bcrypt.hash(adminPassword, salt);
 
     await query(`
-      INSERT INTO users (name, email, password_hash, is_admin, is_blocked, device_switch_count)
-      VALUES ('Super Admin', $1, $2, true, false, 0)
+      INSERT INTO users (name, email, password_hash, is_admin, payment_done)
+      VALUES ('Super Admin', $1, $2, true, false)
       ON CONFLICT (email) DO UPDATE SET 
         is_admin = true, 
-        password_hash = EXCLUDED.password_hash, 
-        is_blocked = false;
+        password_hash = EXCLUDED.password_hash;
     `, [adminEmail, hash]);
 
     console.log(`✅ Superuser synchronized: ${adminEmail}`);
