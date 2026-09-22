@@ -17,12 +17,22 @@ export default function HomePage() {
   useEffect(() => {
     // 1. Fetch Config - always fresh
     const fetchConfig = async () => {
-        const res = await fetch('/api/admin/config', { cache: 'no-store' });
-        if (res.ok) {
-            const data = await res.json();
-            if (Object.keys(data).length > 0) {
-                setConfig(data);
+        try {
+            const res = await fetch('/api/admin/config', { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                console.log('Fetched config:', data); // Debug log
+                if (data && Object.keys(data).length > 0) {
+                    setConfig({
+                        hero_images: data.hero_images || [],
+                        company_pdfs: data.company_pdfs || [],
+                        preparation_pdfs: data.preparation_pdfs || [],
+                        price: data.price?.toString() || '499'
+                    });
+                }
             }
+        } catch (error) {
+            console.error('Failed to fetch config:', error);
         }
     };
 
