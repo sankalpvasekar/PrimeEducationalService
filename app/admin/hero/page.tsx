@@ -24,42 +24,34 @@ export default function HeroAdminPage() {
 
     setUploading(true);
     try {
-      // 1. Upload to Cloudinary
+      // 1. Upload to YOUR backend API (Proxy)
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default');
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      const res = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
       });
       
-      if (!res.ok) {
-          const errorData = await res.json();
-          console.error('Cloudinary Error:', errorData);
-          throw new Error('Cloudinary upload failed');
-      }
+      if (!res.ok) throw new Error('Upload failed');
       
       const data = await res.json();
       const newUrl = data.secure_url;
-      console.log('DEBUG: Cloudinary upload successful:', newUrl);
 
       const newImages = [...heroImages, newUrl];
 
       // 2. Save to DB
-      const dbRes = await fetch('/api/admin/config', {
+      await fetch('/api/admin/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hero_images: newImages })
       });
-      
-      if (!dbRes.ok) throw new Error('Database save failed');
 
       setHeroImages(newImages);
       toast.success('Hero image added');
     } catch (err) {
       console.error('Upload Error:', err);
-      toast.error('Upload failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      toast.error('Upload failed');
     } finally {
       setUploading(false);
     }
