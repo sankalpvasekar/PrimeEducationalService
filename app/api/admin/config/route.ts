@@ -11,7 +11,6 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });
   }
 }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,13 +21,13 @@ export async function POST(req: NextRequest) {
     if (!payload || !payload.isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const body = await req.json();
-    const { hero_image_urls, company_info_pdf_urls, preparation_pdf_urls, price } = body;
+    const { hero_images, company_pdfs, preparation_pdfs, price } = body;
 
     await query(`
-      UPDATE site_config 
-      SET hero_image_urls = $1, company_info_pdf_urls = $2, preparation_pdf_urls = $3, price = $4
+      UPDATE admins_data 
+      SET hero_images = $1, company_pdfs = $2, preparation_pdfs = $3, price = $4
       WHERE id = 1
-    `, [hero_image_urls, company_info_pdf_urls, preparation_pdf_urls, price]);
+    `, [JSON.stringify(hero_images), JSON.stringify(company_pdfs), JSON.stringify(preparation_pdfs), price]);
 
     return NextResponse.json({ success: true, message: 'Configuration updated!' });
   } catch (err) {
