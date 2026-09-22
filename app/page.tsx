@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/jwt';
 import PayButton from '@/components/PayButton'; // We will create this
 
 async function getAdminData() {
-  const configs = await query('SELECT * FROM admins_data LIMIT 1');
+  const configs = await query<any>('SELECT * FROM admins_data LIMIT 1');
   return configs[0] || { hero_images: [], company_pdfs: [], preparation_pdfs: [], price: '499' };
 }
 
@@ -26,7 +26,7 @@ export default async function HomePage() {
   const hasPaid = await checkPurchaseStatus();
   
   // Safely cast or default the price
-  const priceDisplay = config.price ? config.price.toString() : '499';
+  const priceDisplay = config.price ? String(config.price) : '499';
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-4 md:p-6 font-sans">
