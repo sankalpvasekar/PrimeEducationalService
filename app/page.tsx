@@ -33,9 +33,19 @@ export default async function HomePage() {
         <main className="max-w-xl mx-auto space-y-6">
             {/* Hero Section */}
             {config.hero_images && (config.hero_images as string[]).map((url, i) => (
-                <div key={i} className="relative w-full aspect-video">
-                    <Image src={url} alt={`Hero ${i}`} fill className="rounded-3xl object-cover" />
-                </div>
+                url && url.trim() !== '' ? (
+                    <div key={i} className="relative w-full">
+                        <Image 
+                            src={url} 
+                            alt={`Hero ${i}`} 
+                            width={1100} 
+                            height={600} 
+                            className="w-full h-auto rounded-3xl object-contain shadow-md"
+                            sizes="(max-width: 768px) 94vw, 1100px"
+                            priority
+                        />
+                    </div>
+                ) : null
             ))}
             
             {/* Material / Payment Section */}
