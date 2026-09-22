@@ -24,6 +24,9 @@ async function checkPurchaseStatus() {
 export default async function HomePage() {
   const config = await getAdminData();
   const hasPaid = await checkPurchaseStatus();
+  
+  // Safely cast or default the price
+  const priceDisplay = config.price ? config.price.toString() : '499';
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-4 md:p-6 font-sans">
@@ -41,17 +44,17 @@ export default async function HomePage() {
                     <h2 className="text-xl font-bold text-[#5D4037]">Access Material</h2>
                     {(config.company_pdfs as any[]).map((pdf, i) => (
                         <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold hover:bg-[#3E2723] transition-colors">
-                            {pdf.title}
+                            Company Info: {pdf.title}
                         </a>
                     ))}
                     {(config.preparation_pdfs as any[]).map((pdf, i) => (
                         <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold hover:bg-[#A1887F] transition-colors">
-                            {pdf.title}
+                            Preparation: {pdf.title}
                         </a>
                     ))}
                 </div>
             ) : (
-                <PayButton price={config.price.toString()} />
+                <PayButton price={priceDisplay} />
             )}
         </main>
     </div>

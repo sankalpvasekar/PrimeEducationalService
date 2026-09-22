@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} font-sans bg-[#FDFBF7] text-[#3E2723] antialiased`}>
         <Navbar />
         <main className="min-h-screen flex flex-col pt-16">
