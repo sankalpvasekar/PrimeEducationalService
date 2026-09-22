@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
     const payload = verifyToken(token);
     if (!payload) return NextResponse.json({ hasPaid: false });
 
-    const purchase = await query('SELECT id FROM purchases WHERE user_id = $1 AND status = $2', [payload.userId, 'success']);
-    return NextResponse.json({ hasPaid: purchase.length > 0 });
+    const user = await query<{ payment_done: boolean }>('SELECT payment_done FROM users WHERE id = $1', [payload.userId]);
+    return NextResponse.json({ hasPaid: user.length > 0 && user[0].payment_done });
   } catch (err) {
     console.error('Check Purchase Error:', err);
     return NextResponse.json({ hasPaid: false });

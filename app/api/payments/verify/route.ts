@@ -26,13 +26,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Success! Record purchase
-    const config = await query<{ price: number }>('SELECT price FROM site_config WHERE id = 1');
+    const config = await query<{ price: number }>('SELECT price FROM admins_data WHERE id = 1');
     const price = config[0]?.price || 0;
 
+    // Record purchase
     await query(
       'INSERT INTO purchases (user_id, payment_id, amount, status) VALUES ($1, $2, $3, $4)',
       [payload.userId, razorpay_payment_id, price, 'success']
     );
+
+    // Update user payment status
+    await query('UPDATE users SET payment_done = true WHERE id = $1', [payload.userId]);
 
     return NextResponse.json({ success: true });
   } catch (err) {

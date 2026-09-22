@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function HomePage() {
   const [config, setConfig] = useState({ 
-    hero_image_urls: [] as string[], 
+    hero_images: [] as string[], 
     company_pdfs: [] as {url: string, title: string}[], 
     preparation_pdfs: [] as {url: string, title: string}[], 
     price: '499' 
@@ -56,7 +56,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-6 font-sans">
         <main className="max-w-xl mx-auto space-y-8">
-            {config.hero_image_urls && config.hero_image_urls.map((url, i) => (
+            {config.hero_images && config.hero_images.map((url, i) => (
                 <Image key={i} src={url} alt="Hero" width={600} height={300} className="rounded-3xl" />
             ))}
             
@@ -64,10 +64,10 @@ export default function HomePage() {
                 <div className="space-y-4">
                     <h2 className="text-xl font-bold">Access Material</h2>
                     {config.company_pdfs && config.company_pdfs.map((pdf: any, i: number) => (
-                        <a key={i} href={pdf.url} className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold">Company Info: {pdf.title}</a>
+                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold">Company Info: {pdf.title}</a>
                     ))}
                     {config.preparation_pdfs && config.preparation_pdfs.map((pdf: any, i: number) => (
-                        <a key={i} href={pdf.url} className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold">Preparation: {pdf.title}</a>
+                        <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#C5A059] text-white p-4 rounded-xl font-bold">Preparation: {pdf.title}</a>
                     ))}
                 </div>
             ) : (

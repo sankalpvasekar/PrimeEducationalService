@@ -4,13 +4,13 @@ import { verifyToken } from '@/lib/jwt';
 
 export async function GET() {
   try {
-    await initDB(); // Ensure table exists
-    const configs = await query('SELECT * FROM site_config LIMIT 1');
+    const configs = await query('SELECT * FROM admins_data LIMIT 1');
     return NextResponse.json(configs[0] || {});
   } catch (err) {
     console.error('Config Fetch Error:', err);
     return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });
   }
+}
 }
 
 export async function POST(req: NextRequest) {

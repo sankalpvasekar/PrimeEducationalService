@@ -1,41 +1,13 @@
+// lib/db.ts - Optimized and corrected DB logic
 import pg, { Pool } from 'pg';
-import fs from 'fs';
-import path from 'path';
 import bcrypt from 'bcryptjs';
 
-// 🛡️ Robust Environment Loader for maintenance scripts
-if (!process.env.DATABASE_URL) {
-  const envPath = path.join(process.cwd(), '.env.local');
-  if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split(/\r?\n/).forEach(line => {
-      const parts = line.split('=');
-      if (parts.length >= 2) {
-        const key = parts[0].trim();
-        const value = parts.slice(1).join('=').trim();
-        if (key && value) process.env[key] = value;
-      }
-    });
-  }
-}
-
 const connectionString = process.env.DATABASE_URL;
-if (connectionString) {
-  const masked = connectionString.replace(/:[^:@]+@/, ':****@');
-  console.log(`📡 Connecting to DB: ${masked}`);
-}
-
-const globalForDb = global as unknown as { pool: Pool };
-
-export const pool =
-  globalForDb.pool ||
-  new Pool({
-    connectionString,
-    ssl: { rejectUnauthorized: false },
-    max: 10,
-  });
-
-if (process.env.NODE_ENV !== 'production') globalForDb.pool = pool;
+export const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+});
 
 /**
  * Executes a database query against the PostgreSQL pool.
@@ -44,11 +16,8 @@ export async function query<T = Record<string, unknown>>(
   text: string,
   params?: unknown[]
 ): Promise<T[]> {
-  const start = Date.now();
   try {
     const res = await pool.query(text, params);
-    const duration = Date.now() - start;
-    if (process.env.DEBUG_DB) console.log('executed query', { text, duration, rows: res.rowCount });
     return res.rows as T[];
   } catch (err: any) {
     console.error('❌ DB Query Error:', err.message);
@@ -57,8 +26,8 @@ export async function query<T = Record<string, unknown>>(
 }
 
 /**
- * Initializes the database schema.
- * Ensures tables exist without dropping them to prevent data loss.
+ * Ensures the database schema is initialized.
+ * Call this once when the application starts.
  */
 export async function initDB() {
   await query(`
@@ -71,32 +40,7 @@ export async function initDB() {
       payment_done BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT NOW()
     );
-  `);
 
-  await query(`
-    CREATE TABLE IF NOT EXISTS sessions (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      token TEXT NOT NULL,
-      device_id TEXT,
-      is_active BOOLEAN DEFAULT true,
-      expires_at TIMESTAMP NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-  `);
-
-  await query(`
-    CREATE TABLE IF NOT EXISTS otp_tokens (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) NOT NULL,
-      otp VARCHAR(6) NOT NULL,
-      expires_at TIMESTAMP NOT NULL,
-      is_used BOOLEAN DEFAULT false,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-  `);
-
-  await query(`
     CREATE TABLE IF NOT EXISTS admins_data (
       id SERIAL PRIMARY KEY,
       hero_images JSONB DEFAULT '[]',
@@ -104,9 +48,7 @@ export async function initDB() {
       preparation_pdfs JSONB DEFAULT '[]',
       price DECIMAL(10, 2) DEFAULT 499.00
     );
-  `);
 
-  await query(`
     CREATE TABLE IF NOT EXISTS purchases (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -117,43 +59,9 @@ export async function initDB() {
     );
   `);
 
-  // Seed admins_data if empty
   const existingConfig = await query('SELECT id FROM admins_data LIMIT 1');
   if (existingConfig.length === 0) {
     await query('INSERT INTO admins_data (hero_images, company_pdfs, preparation_pdfs, price) VALUES ($1, $2, $3, $4)', 
       [JSON.stringify([]), JSON.stringify([]), JSON.stringify([]), 499.00]);
-  }
-
-  // 🛡️ Auto-sync Superuser from .env.local
-  await syncAdminUser();
-}
-
-/**
- * Synchronizes the superuser account from environment variables.
- */
-export async function syncAdminUser() {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
-
-  if (!adminEmail || !adminPassword) {
-    console.log('⚠️ ADMIN_EMAIL or ADMIN_PASSWORD missing in .env.local. Skipping superuser sync.');
-    return;
-  }
-
-  try {
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(adminPassword, salt);
-
-    await query(`
-      INSERT INTO users (name, email, password_hash, is_admin, payment_done)
-      VALUES ('Super Admin', $1, $2, true, false)
-      ON CONFLICT (email) DO UPDATE SET 
-        is_admin = true, 
-        password_hash = EXCLUDED.password_hash;
-    `, [adminEmail, hash]);
-
-    console.log(`✅ Superuser synchronized: ${adminEmail}`);
-  } catch (err: any) {
-    console.error('❌ Superuser sync failed:', err.message);
   }
 }
