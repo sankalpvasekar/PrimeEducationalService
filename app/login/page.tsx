@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
-import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -93,19 +92,34 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* ... existing form fields ... */}
+          <div>
+            <label className="block text-sm font-semibold text-[#5D4037] mb-1.5">Email Address</label>
+            <input
+              type="email" placeholder="you@example.com" className="auth-input"
+              value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between mb-1.5">
+              <label className="text-sm font-semibold text-[#5D4037]">Password</label>
+              <Link href="/forgot-password" className="text-xs text-[#C5A059] hover:underline font-medium">Forgot Password?</Link>
+            </div>
+            <div className="relative">
+              <input
+                type={showPass ? 'text' : 'password'} placeholder="Your password" className="auth-input pr-10"
+                value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+              />
+              <button type="button" className="absolute right-3 top-3.5 text-[#A1887F]" onClick={() => setShowPass(!showPass)}>
+                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
           <button type="submit" disabled={loading} className="auth-btn mt-2">
             {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin" size={18} />Logging in...</span> : 'Login'}
           </button>
         </form>
-
-        <button 
-          onClick={() => signIn('google', { callbackUrl: '/' })}
-          className="w-full flex items-center justify-center gap-2 border border-[#C5A059] p-3 rounded-xl font-bold hover:bg-[#FDFBF7] mt-4"
-        >
-          <Image src="/google.svg" alt="Google" width={20} height={20} />
-          Continue with Google
-        </button>
 
         <p className="text-center text-sm text-[#A1887F] mt-6">
           Don&apos;t have an account?{' '}

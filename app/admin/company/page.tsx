@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Upload, FileText, Trash2, Loader2 } from 'lucide-react';
+import { Upload, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function CompanyAdminPage() {
@@ -14,13 +14,48 @@ export default function CompanyAdminPage() {
     });
   }, []);
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      
+      const newPdf = { url: data.secure_url, title: file.name };
+      const newPdfs = [...pdfs, newPdf];
+
+      await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_pdfs: newPdfs })
+      });
+
+      setPdfs(newPdfs);
+      toast.success('PDF uploaded');
+    } catch (err) {
+      toast.error('Upload failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (index: number) => {
     const newPdfs = pdfs.filter((_, i) => i !== index);
-    // TODO: Implement API call to save newPdfs to DB
+    await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_pdfs: newPdfs })
+    });
     setPdfs(newPdfs);
     toast.success('PDF deleted');
   };
-
+  
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -35,7 +70,7 @@ export default function CompanyAdminPage() {
         ))}
       </div>
       <div className="p-6 bg-white border rounded-3xl space-y-4">
-        <input type="file" accept=".pdf" className="w-full border p-3 rounded-xl" />
+        <input type="file" accept=".pdf" onChange={handleUpload} className="w-full border p-3 rounded-xl" />
         <button className="bg-[#5D4037] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2">
            <Upload size={18} /> Upload New PDF
         </button>
