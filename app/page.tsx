@@ -1,12 +1,13 @@
+import Link from 'next/link';
 import { query } from '@/lib/db';
 import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
-import PayButton from '@/components/PayButton'; // We will create this
+import PayButton from '@/components/PayButton';
 
 async function getAdminData() {
   const configs = await query<any>('SELECT * FROM admins_data LIMIT 1');
-  return configs[0] || { hero_images: [], company_pdfs: [], preparation_pdfs: [], price: '499' };
+  return configs[0] || { hero_images: [], price: '499' };
 }
 
 async function checkPurchaseStatus() {
@@ -24,14 +25,11 @@ async function checkPurchaseStatus() {
 export default async function HomePage() {
   const config = await getAdminData();
   const hasPaid = await checkPurchaseStatus();
-  
-  // Safely cast or default the price
   const priceDisplay = config.price ? String(config.price) : '499';
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-4 md:p-6 font-sans">
         <main className="max-w-xl mx-auto space-y-6">
-            {/* Hero Section */}
             {config.hero_images && (config.hero_images as string[]).map((url, i) => (
                 url && url.trim() !== '' ? (
                     <div key={i} className="relative w-full">
@@ -48,31 +46,10 @@ export default async function HomePage() {
                 ) : null
             ))}
             
-            {/* Material / Payment Section */}
             {hasPaid ? (
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-[#5D4037]">Dashboard</h2>
-                    <p className="text-[#A1887F]">Welcome! You have full access to the materials below.</p>
-                    
-                    <div className="grid grid-cols-1 gap-6">
-                        <div className="space-y-3">
-                            <h3 className="font-semibold text-lg text-[#5D4037] border-b pb-2">Company Information</h3>
-                            {(config.company_pdfs as any[]).map((pdf, i) => (
-                                <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full bg-white border border-[#5D4037]/20 text-[#5D4037] p-4 rounded-xl font-bold hover:bg-[#5D4037] hover:text-white transition-colors">
-                                    {pdf.title}
-                                </a>
-                            ))}
-                        </div>
-                        <div className="space-y-3">
-                            <h3 className="font-semibold text-lg text-[#C5A059] border-b pb-2">Preparation Material</h3>
-                            {(config.preparation_pdfs as any[]).map((pdf, i) => (
-                                <a key={i} href={pdf.url} target="_blank" rel="noopener noreferrer" className="block w-full bg-white border border-[#C5A059]/20 text-[#C5A059] p-4 rounded-xl font-bold hover:bg-[#C5A059] hover:text-white transition-colors">
-                                    {pdf.title}
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                <Link href="/dashboard" className="block w-full text-center bg-[#5D4037] text-white p-4 rounded-xl font-bold hover:bg-[#3E2723] transition-colors">
+                    Go to Dashboard
+                </Link>
             ) : (
                 <PayButton price={priceDisplay} />
             )}
