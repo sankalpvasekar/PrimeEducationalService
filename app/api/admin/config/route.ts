@@ -21,8 +21,18 @@ export async function POST(req: NextRequest) {
     if (!payload || !payload.isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const body = await req.json();
-    const { hero_images, company_pdfs, preparation_pdfs, price } = body;
+    
+    // 1. Fetch current data to merge
+    const current = await query<any>('SELECT * FROM admins_data LIMIT 1');
+    const existing = current[0] || { hero_images: [], company_pdfs: [], preparation_pdfs: [], price: 499 };
 
+    // 2. Merge incoming data with existing data
+    const hero_images = body.hero_images !== undefined ? body.hero_images : (existing.hero_images || []);
+    const company_pdfs = body.company_pdfs !== undefined ? body.company_pdfs : (existing.company_pdfs || []);
+    const preparation_pdfs = body.preparation_pdfs !== undefined ? body.preparation_pdfs : (existing.preparation_pdfs || []);
+    const price = body.price !== undefined ? body.price : (existing.price || 499);
+
+    // 3. Update DB
     await query(`
       UPDATE admins_data 
       SET hero_images = $1, company_pdfs = $2, preparation_pdfs = $3, price = $4
