@@ -15,19 +15,13 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Fetch Config
+    // 1. Fetch Config - always fresh
     const fetchConfig = async () => {
-        const cached = sessionStorage.getItem('siteConfig');
-        if (cached) {
-            setConfig(JSON.parse(cached));
-        } else {
-            const res = await fetch('/api/admin/config');
-            if (res.ok) {
-                const data = await res.json();
-                if (Object.keys(data).length > 0) {
-                    setConfig(data);
-                    sessionStorage.setItem('siteConfig', JSON.stringify(data));
-                }
+        const res = await fetch('/api/admin/config', { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            if (Object.keys(data).length > 0) {
+                setConfig(data);
             }
         }
     };
