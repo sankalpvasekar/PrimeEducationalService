@@ -39,9 +39,6 @@ if (process.env.NODE_ENV !== 'production') globalForDb.pool = pool;
 
 /**
  * Executes a database query against the PostgreSQL pool.
- * @param text - The SQL query string.
- * @param params - Optional parameters for the query.
- * @returns A promise that resolves to the query result rows.
  */
 export async function query<T = Record<string, unknown>>(
   text: string,
@@ -55,21 +52,16 @@ export async function query<T = Record<string, unknown>>(
     return res.rows as T[];
   } catch (err: any) {
     console.error('❌ DB Query Error:', err.message);
-    if (err.message.includes('SSL')) {
-      console.log('💡 TIP: Try adding "?sslmode=require" to your DATABASE_URL in .env.local if not present.');
-    }
     throw err;
   }
 }
 
 /**
  * Initializes the database schema.
- * Drops existing tables and recreates them with the current schema.
- * Seeds default data for admin configurations.
+ * Ensures tables exist without dropping them to prevent data loss.
  */
 export async function initDB() {
   await query(`
-    DROP TABLE IF EXISTS users;
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
@@ -82,7 +74,29 @@ export async function initDB() {
   `);
 
   await query(`
-    DROP TABLE IF EXISTS admins_data;
+    CREATE TABLE IF NOT EXISTS sessions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      token TEXT NOT NULL,
+      device_id TEXT,
+      is_active BOOLEAN DEFAULT true,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS otp_tokens (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      otp VARCHAR(6) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      is_used BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
+  await query(`
     CREATE TABLE IF NOT EXISTS admins_data (
       id SERIAL PRIMARY KEY,
       hero_images JSONB DEFAULT '[]',
@@ -92,8 +106,23 @@ export async function initDB() {
     );
   `);
 
-  await query('INSERT INTO admins_data (hero_images, company_pdfs, preparation_pdfs, price) VALUES ($1, $2, $3, $4)', 
+  await query(`
+    CREATE TABLE IF NOT EXISTS purchases (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      payment_id VARCHAR(255),
+      amount DECIMAL(10, 2),
+      status VARCHAR(50) DEFAULT 'success',
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
+  // Seed admins_data if empty
+  const existingConfig = await query('SELECT id FROM admins_data LIMIT 1');
+  if (existingConfig.length === 0) {
+    await query('INSERT INTO admins_data (hero_images, company_pdfs, preparation_pdfs, price) VALUES ($1, $2, $3, $4)', 
       [JSON.stringify([]), JSON.stringify([]), JSON.stringify([]), 499.00]);
+  }
 
   // 🛡️ Auto-sync Superuser from .env.local
   await syncAdminUser();
@@ -101,7 +130,6 @@ export async function initDB() {
 
 /**
  * Synchronizes the superuser account from environment variables.
- * Creates or updates the admin user in the database.
  */
 export async function syncAdminUser() {
   const adminEmail = process.env.ADMIN_EMAIL;

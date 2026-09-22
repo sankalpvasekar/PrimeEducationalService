@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 
-export function middleware(request: Request) {
+export function proxy(request: Request) {
   const token = cookies().get('auth_token')?.value;
   if (!token) return NextResponse.redirect(new URL('/login', request.url));
   
