@@ -29,15 +29,22 @@ export default function RegisterPage() {
     setErrors({});
     setLoading(true);
     try {
+      const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
+        body: JSON.stringify({ name: form.name, email: form.email, password: form.password, deviceId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');
-      toast.success('Account created! Please login.');
-      router.push('/login');
+      
+      // Store user and token
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.dispatchEvent(new Event('auth-change'));
+      
+      toast.success('Account created and logged in!');
+      router.push('/');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
