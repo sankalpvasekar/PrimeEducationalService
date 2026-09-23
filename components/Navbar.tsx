@@ -101,8 +101,12 @@ export default function Navbar() {
 
         {/* COMPACT HAMBURGER (MOBILE) */}
         <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-1.5 text-[#5D4037] hover:bg-[#C5A059]/5 rounded-md transition-colors"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
+          className="md:hidden p-1.5 text-[#5D4037] hover:bg-[#C5A059]/5 rounded-md transition-colors z-[101]"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
