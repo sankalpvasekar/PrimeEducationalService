@@ -15,9 +15,11 @@ export default async function HomePage() {
         <main className="max-w-xl mx-auto space-y-6 text-center">
             {/* Hero Image */}
             {config.hero_images && (config.hero_images as string[]).map((url, i) => (
-                <div key={i} className="relative w-full">
-                    <Image src={url} alt="Hero" width={1100} height={600} className="w-full h-auto rounded-3xl object-contain shadow-md" priority />
-                </div>
+                url && url.trim() !== '' ? (
+                    <div key={i} className="relative w-full">
+                        <Image src={url} alt="Hero" width={1100} height={600} className="w-full h-auto rounded-3xl object-contain shadow-md" priority />
+                    </div>
+                ) : null
             ))}
             
             {/* Highlight Section */}
