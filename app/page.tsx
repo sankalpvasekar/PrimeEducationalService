@@ -13,15 +13,6 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-4 md:p-6 font-sans">
         <main className="max-w-xl mx-auto space-y-6 text-center">
-            {/* Hero Image */}
-            {config.hero_images && (config.hero_images as string[]).map((url, i) => (
-                url && url.trim() !== '' ? (
-                    <div key={i} className="relative w-full">
-                        <Image src={url} alt="Hero" width={1100} height={600} className="w-full h-auto rounded-3xl object-contain shadow-md" priority />
-                    </div>
-                ) : null
-            ))}
-            
             {/* Highlight Section */}
             <div className="p-8 bg-white border border-[#C5A059]/20 rounded-3xl shadow-sm">
                 <h1 className="text-3xl font-extrabold text-[#5D4037] mb-6 leading-tight">
